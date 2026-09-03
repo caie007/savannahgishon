@@ -1,0 +1,14 @@
+{
+  "raw_gb_parquet": 37.11,
+  "raw_files": 88,
+  "working_gb_parquet": 13.32,
+  "processing_gb_parquet": 5.55,
+  "processing_gb_uncompressed": 54.45,
+  "processing_rows": 243589684,
+  "processing_cols": 25,
+  "rows_after_cleaning": 232463392,
+  "pct_retained": 95.43,
+  "mean_trips_per_day": 636886,
+  "peak_trips_per_day": 887777,
+  "trips_per_second_mean": 7.4
+}

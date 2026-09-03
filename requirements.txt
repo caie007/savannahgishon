@@ -1,0 +1,8 @@
+# MIT 805 HVFHV project
+# PySpark requires a Java 11 or 17 runtime on PATH.
+pyspark==3.5.1
+pandas>=2.0
+matplotlib>=3.7
+requests>=2.31
+pyarrow>=14.0
+jupyterlab>=4.0

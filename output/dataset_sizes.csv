@@ -1,0 +1,4 @@
+tier,n_files,period,gb_parquet
+raw,88,2019-02 to 2026-05,37.11
+working,29,2024-01 to 2026-05,13.32
+processing,12,2025-01 to 2025-12,5.55

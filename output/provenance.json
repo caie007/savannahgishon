@@ -1,0 +1,16 @@
+{
+  "publisher": "New York City Taxi and Limousine Commission (TLC)",
+  "dataset": "High Volume For-Hire Vehicle (HVFHV) Trip Records",
+  "landing_page": "https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page",
+  "data_dictionary": "https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf",
+  "user_guide": "https://www.nyc.gov/assets/tlc/downloads/pdf/trip_record_user_guide.pdf",
+  "file_pattern": "https://d37ci6vzurychx.cloudfront.net/trip-data/fhvhv_tripdata_YYYY-MM.parquet",
+  "mirror": "AWS Open Data Registry, s3://nyc-tlc (us-east-1)",
+  "zone_lookup": "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv",
+  "zone_shapefile": "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zones.zip",
+  "licence": "NYC.gov Terms of Use (https://www.nyc.gov/home/terms-of-use.page); published as NYC Open Data. Free public reuse including research, with attribution to the City of New York.",
+  "coverage_start": "2019-02",
+  "publication_cadence": "Monthly, with roughly a two-month lag for vendor submissions",
+  "accuracy_disclaimer": "TLC states the trip data was not created by the TLC and it makes no representations as to accuracy; HVFHV records are submitted by the licensed high-volume bases.",
+  "pii": "No rider, driver, or vehicle identifiers. Locations are generalised to 265 taxi zones; no GPS coordinates since July 2016."
+}

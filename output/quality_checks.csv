@@ -1,0 +1,11 @@
+check,records,pct
+pickup < request,2790424,1.1455
+driver_pay <= 0,58781,0.0241
+trip_miles <= 0,28128,0.0115
+trip_miles > 100,22397,0.0092
+base_passenger_fare < 0,13495,0.0055
+dropoff <= pickup,12231,0.005
+unknown zone (264/265),10398,0.0043
+trip_time > 6h,465,0.0002
+implied speed > 90 mph,94,0.0
+trip_time <= 0,31,0.0

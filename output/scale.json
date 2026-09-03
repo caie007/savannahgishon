@@ -1,0 +1,7 @@
+{
+  "rows": 243589684,
+  "cols": 25,
+  "bytes_per_row": 240,
+  "processing_parquet_gb": 5.55,
+  "processing_uncompressed_gb": 54.45
+}

@@ -1,0 +1,16 @@
+data/raw/
+*.parquet
+*.part
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+spark-warehouse/
+metastore_db/
+derby.log
+report/*.aux
+report/*.log
+report/*.out
+report/*.synctex.gz
+
+tmp/
+.idea/
