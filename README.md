@@ -1,10 +1,10 @@
-# MIT 805 Big Data — NYC High Volume For-Hire Vehicle (HVFHV) Analysis
+﻿# MIT 805 Big Data â€” NYC High Volume For-Hire Vehicle (HVFHV) Analysis
 
 University of Pretoria, MIT 805 semester project (2026).
-**Group members:** \<Name 1\> (\<student no.\>), \<Name 2\> (\<student no.\>)
+**Group members:** Gishon K Gwenzi (21731056), Letsoba Savannah Mabe (20582995)
 
 Analysis of New York City Taxi and Limousine Commission High Volume For-Hire
-Vehicle trip records — every trip dispatched by Uber, Lyft, Via and Juno — using
+Vehicle trip records â€” every trip dispatched by Uber, Lyft, Via and Juno â€” using
 PySpark for distributed, MapReduce-style processing.
 
 | | |
@@ -39,7 +39,7 @@ The HVFHV series is **not schema-stable** and this will break a naive read:
 
 | Period | Notes |
 |---|---|
-| 2019-02 – 2020-12 | Reduced schema: licensee, base, pickup/dropoff time, PU/DO zone, `SR_Flag` only |
+| 2019-02 â€“ 2020-12 | Reduced schema: licensee, base, pickup/dropoff time, PU/DO zone, `SR_Flag` only |
 | 2021-01 onward | Adds `request_datetime`, `on_scene_datetime`, `trip_miles`, `trip_time`, itemised fares, `driver_pay`, shared/WAV/Access-A-Ride flags |
 | 2025-01 onward | Adds `cbd_congestion_fee` for NYC congestion pricing |
 
@@ -49,10 +49,10 @@ Read with `mergeSchema` enabled, or restrict to a single-schema window.
 
 Defined in `src/config.py` and measured by `src/sizes.py`:
 
-- **Raw** — the full published archive (2019-02 to 2026-05). Measured via HTTP
+- **Raw** â€” the full published archive (2019-02 to 2026-05). Measured via HTTP
   `HEAD` requests; never downloaded in full.
-- **Working** — 2024-01 onward; the modern, schema-consistent window.
-- **Processing** — calendar year 2025; the first complete year under NYC
+- **Working** â€” 2024-01 onward; the modern, schema-consistent window.
+- **Processing** â€” calendar year 2025; the first complete year under NYC
   congestion pricing.
 
 Actual measured sizes are written to `output/dataset_sizes.csv`.
@@ -90,16 +90,16 @@ is safe to re-run after an interrupted download.
 
 ```
 .
-├── README.md
-├── requirements.txt
-├── data/
-│   ├── README.md          how to obtain the data; raw files are not committed
-│   └── raw/               (gitignored)
-├── notebooks/             analysis notebooks
-├── src/                   config, size audit, download helpers
-├── output/                computed aggregates (CSV/JSON), committed
-├── figures/               generated plots, committed
-└── report/                LaTeX source and compiled PDFs
+â”œâ”€â”€ README.md
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ data/
+â”‚   â”œâ”€â”€ README.md          how to obtain the data; raw files are not committed
+â”‚   â””â”€â”€ raw/               (gitignored)
+â”œâ”€â”€ notebooks/             analysis notebooks
+â”œâ”€â”€ src/                   config, size audit, download helpers
+â”œâ”€â”€ output/                computed aggregates (CSV/JSON), committed
+â”œâ”€â”€ figures/               generated plots, committed
+â””â”€â”€ report/                LaTeX source and compiled PDFs
 ```
 
 ## Outputs
@@ -122,6 +122,19 @@ is safe to re-run after an interrupted download.
 
 ## Attribution
 
-Trip data © City of New York, published by the NYC Taxi and Limousine
+Trip data Â© City of New York, published by the NYC Taxi and Limousine
 Commission under the NYC.gov Terms of Use. The TLC states that the trip data was
 not created by the TLC and it makes no representations as to its accuracy.
+
+## Part 2 — MapReduce & Visualisation
+
+Run `notebooks/02_part2_congestion_and_supply.ipynb`. Requires **Python 3.11**
+(PySpark 3.5 is incompatible with 3.12+), Java 17, and ~11 GB of disk for the
+2024–2025 working set, which the notebook downloads on first run.
+
+Section 4 builds `output/agg/agg_zone_hour_month.parquet` (2.1 GB, ~74M rows)
+in a single distributed pass. **This file is not committed** — regenerate it by
+running that section, which takes 20–40 minutes. Everything in `output/p2/`
+derives from it.
+
+Report: `report/MIT805_Part2_HVFHV_report.pdf`
