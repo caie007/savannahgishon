@@ -1,0 +1,75 @@
+Zone,Borough,bad_hours,mean_mismatch,trips
+Hammels/Arverne,Queens,24,1.6149748340777217,370617
+Charleston/Tottenville,Staten Island,24,1.6052267909994378,104219
+Rockaway Park,Queens,24,1.548548811922312,169166
+Far Rockaway,Queens,24,1.5408767858034267,439550
+Great Kills,Staten Island,22,1.5140128868000502,151597
+Eltingville/Annadale/Prince's Bay,Staten Island,22,1.4690692668909784,100112
+Arden Heights,Staten Island,20,1.4957170067376528,65169
+New Dorp/Midland Beach,Staten Island,20,1.4821795380087548,125543
+Grymes Hill/Clifton,Staten Island,20,1.440005581697971,164979
+Douglaston,Queens,20,1.4253899813181088,105621
+City Island,Bronx,18,1.7801993127553422,40279
+Heartland Village/Todt Hill,Staten Island,18,1.508318080960623,173631
+Oakwood,Staten Island,18,1.4799996936423376,67213
+Bloomfield/Emerson Hill,Staten Island,17,1.4816186050753557,229670
+Rossville/Woodrow,Staten Island,17,1.4686040845152581,47815
+Rosedale,Queens,16,1.3368951851738904,218470
+West Brighton,Staten Island,15,1.4396987616323846,98620
+Randalls Island,Manhattan,14,1.600330645203033,45965
+JFK Airport,Queens,13,1.4649470113619398,2039303
+Port Richmond,Staten Island,12,1.4345405616024722,56711
+South Beach/Dongan Hills,Staten Island,11,1.5004896693251277,53737
+Stapleton,Staten Island,11,1.4454890259157969,122010
+Roosevelt Island,Manhattan,11,1.419114379118208,71844
+Flushing Meadows-Corona Park,Queens,10,1.7839192825406904,129087
+Saint George/New Brighton,Staten Island,10,1.507644574917855,129324
+LaGuardia Airport,Queens,9,1.7122137579886325,1648742
+Glen Oaks,Queens,9,1.4372617142212298,34267
+Mariners Harbor,Staten Island,9,1.421938755631374,70231
+Arrochar/Fort Wadsworth,Staten Island,9,1.408851776908692,34223
+Bay Terrace/Fort Totten,Queens,9,1.3967565661468146,44789
+Country Club,Bronx,8,1.3494387590002643,24205
+Breezy Point/Fort Tilden/Riis Beach,Queens,6,2.0943161151582985,9003
+Pelham Bay Park,Bronx,6,1.4624064706204383,18893
+Marine Park/Floyd Bennett Field,Brooklyn,6,1.3732526245390566,9555
+Westerleigh,Staten Island,6,1.353233341210605,28005
+Brooklyn Navy Yard,Brooklyn,5,1.6974168404040277,38041
+South Williamsburg,Brooklyn,5,1.4191444786806975,89821
+Stuyvesant Heights,Brooklyn,5,1.3618207075119697,376882
+East Flatbush/Remsen Village,Brooklyn,4,1.4152079475893875,198422
+Howard Beach,Queens,4,1.3797578938304407,30575
+Bedford,Brooklyn,4,1.3670298103519893,257433
+Saint Albans,Queens,3,1.3723637140143656,121906
+Bellerose,Queens,3,1.35965775840843,7214
+Hollis,Queens,3,1.344610878352748,36066
+Crown Heights North,Brooklyn,3,1.3427721601343954,328752
+Ocean Hill,Brooklyn,3,1.3308250211900357,156882
+College Point,Queens,3,1.3270485947380075,18495
+Corona,Queens,2,1.500378412505608,7085
+Stuy Town/Peter Cooper Village,Manhattan,2,1.3797137409347626,63873
+Brownsville,Brooklyn,2,1.3784794182516094,114932
+Alphabet City,Manhattan,2,1.359365416411531,62232
+Oakland Gardens,Queens,2,1.344556580618843,2729
+Crown Heights South,Brooklyn,2,1.3436433989427687,57281
+Maspeth,Queens,2,1.3374050888026827,63643
+Times Sq/Theatre District,Manhattan,2,1.323211164946343,383145
+Co-Op City,Bronx,2,1.3180263009283726,54094
+Whitestone,Queens,2,1.3048272700334216,17331
+Two Bridges/Seward Park,Manhattan,1,1.3707164075414375,44545
+Flatlands,Brooklyn,1,1.3659895123558745,71348
+Canarsie,Brooklyn,1,1.365674884417559,105728
+East Flatbush/Farragut,Brooklyn,1,1.3577878192167252,56390
+Soundview/Castle Hill,Bronx,1,1.3453834769489812,68356
+Red Hook,Brooklyn,1,1.3430790325272801,22788
+Starrett City,Brooklyn,1,1.342122293704536,20041
+Cambria Heights,Queens,1,1.3261130748320848,3510
+Bushwick North,Brooklyn,1,1.3228775819766334,78327
+Glendale,Queens,1,1.3183547733492018,31449
+Soundview/Bruckner,Bronx,1,1.3182779387979207,32197
+Williamsburg (South Side),Brooklyn,1,1.3176785509923963,63431
+Forest Hills,Queens,1,1.307826749975514,75610
+West Farms/Bronx River,Bronx,1,1.3066749178004387,35367
+Midtown Center,Manhattan,1,1.3041638182602402,203509
+West Concourse,Bronx,1,1.3020055296967943,66937
+Marine Park/Mill Basin,Brooklyn,1,1.2991684050205536,30239

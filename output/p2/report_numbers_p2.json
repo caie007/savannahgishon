@@ -1,0 +1,16 @@
+{
+  "records_2024": 229391984,
+  "records_2025": 232463392,
+  "records_total": 461855376,
+  "agg_rows": 73973527,
+  "n_cbd_zones": 38,
+  "cbd_threshold": 0.8,
+  "cbd_share_2024_pct": 34.84,
+  "cbd_share_2025_pct": 32.88,
+  "cbd_fee_total_2025": 117124705.5,
+  "rdd_seconds": 12.7,
+  "df_seconds": 1.9,
+  "speedup": 6.56,
+  "density_wait_corr": -0.472,
+  "mismatch_p90_threshold": 1.297
+}

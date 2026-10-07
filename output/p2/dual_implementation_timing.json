@@ -1,0 +1,8 @@
+{
+  "rows_benchmarked": 1964006,
+  "partitions": 8,
+  "rdd_seconds": 12.7,
+  "df_seconds": 1.9,
+  "speedup": 6.56,
+  "keys": 6143
+}
