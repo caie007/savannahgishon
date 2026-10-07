@@ -1,10 +1,10 @@
-﻿# MIT 805 Big Data â€” NYC High Volume For-Hire Vehicle (HVFHV) Analysis
+# MIT 805 Big Data â€” NYC High Volume For-Hire Vehicle (HVFHV) Analysis
 
 University of Pretoria, MIT 805 semester project (2026).
 **Group members:** Gishon K Gwenzi (21731056), Letsoba Savannah Mabe (20582995)
 
 Analysis of New York City Taxi and Limousine Commission High Volume For-Hire
-Vehicle trip records â€” every trip dispatched by Uber, Lyft, Via and Juno â€” using
+Vehicle trip records  every trip dispatched by Uber, Lyft, Via and Juno  using
 PySpark for distributed, MapReduce-style processing.
 
 | | |
