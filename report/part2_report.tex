@@ -2,6 +2,12 @@
 \usepackage[margin=1.75cm]{geometry}
 \usepackage{graphicx,booktabs,titlesec,hyperref,caption,siunitx,xcolor,amsmath}
 \usepackage[T1]{fontenc}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage{float}
+
+\newcommand{\change}[1]{\hl{#1}}
+\sethlcolor{yellow}
 \usepackage[protrusion=true,expansion=false]{microtype}
 \hypersetup{colorlinks=true,urlcolor=blue!55!black,linkcolor=black}
 \captionsetup{font=small,labelfont=bf,skip=3pt}
@@ -32,40 +38,41 @@ A PySpark MapReduce Analysis of 462 Million Trips}\\[0.2em]
 
 New York's high-volume for-hire vehicle (HVFHV) market moved \num{461855376}
 trips across 2024 and 2025. Part~1 established, on 2025 data alone, that
-passenger wait peaks at 04:00 and troughs at 10:00 --- the inverse of the demand
-profile --- implying that service quality is governed by driver supply rather
+passenger wait peaks at 04:00 and troughs at 10:00, the inverse of the demand
+profile, implying that service quality is governed by driver supply rather
 than road congestion. It also showed that the central business district (CBD)
-congestion fee introduced on 5~January~2025 is a flat \$1.50 charge, and
+congestion fee introduced on 5~January~2025 is a flat \$1.50 charge and
 therefore proportionally heavier on low-fare trips.
 
 Part~2 tests both propositions at scale and joins them into one question:
 
 \begin{quote}
 \emph{Where, when and for whom does New York's ridehail market fail to match
-supply to demand --- and did congestion pricing change that?}
+supply to demand, and did congestion pricing change that?}
 \end{quote}
 
-Three sub-questions follow. \textbf{(i)} Did CBD-bound volume fall after the
+Four sub-questions follow. \textbf{(i)} Did CBD-bound volume fall after the
 charge, relative to trips that never enter the zone, and beyond any pre-existing
 trend? \textbf{(ii)} Who bore the cost of a flat fee? \textbf{(iii)} Which zones
-and hours are persistently under-served, and does supply density explain it?
+and hours are persistently under-served, and does supply density explain it? \textbf{(iv)}How does realised demand vary across time and location, and how
+are passenger fares and driver compensation associated with different
+demand conditions
 
-Answering these requires a full pass over 24 months of trip records --- roughly
-\SI{107}{\giga\byte} uncompressed --- which is not tractable on a single-threaded
+Answering these requires a full pass over 24 months of trip records, roughly
+\SI{107}{\giga\byte} uncompressed, which is not tractable on a single-threaded
 framework. The analysis is therefore implemented as MapReduce-style distributed
 processing in PySpark.
 
 \section{Data and distributed architecture}
 
 The working set is 24 monthly Parquet files (2024-01 to 2025-12),
-\SI{11.1}{\giga\byte} compressed. After the Part~1 cleaning rules --- positive
+\SI{11.1}{\giga\byte} compressed. After the Part~1 cleaning rules, positive
 distance and duration, duration $\leq$\,6\,h, non-negative fare, dropoff after
-pickup, and both endpoints among the 265 mapped taxi zones --- \num{229391984}
+pickup, and both endpoints among the 265 mapped taxi zones, \num{229391984}
 records remain for 2024 and \num{232463392} for 2025.
 
 A single distributed pass reduces these \num{461855376} rows to an aggregate of
-\num{73973527} rows keyed by
-$(\text{PU zone},\text{DO zone},\text{year},\text{month},\text{dow},\text{hour})$,
+\num{73973527} rows keyed by PU zone, DO zone, year, month, day of week and hour,
 storing \emph{sums} rather than means so that any later regrouping re-aggregates
 correctly. Every subsequent result in this report is computed from that
 aggregate. This pre-aggregation pattern is the practical core of the work: it
@@ -83,6 +90,30 @@ to 2024 to label trips that \emph{would have been} charged. A ring of 32
 Manhattan zones immediately outside the charged area was labelled
 \emph{boundary} to test for displacement.
 
+\subsection{Deriving realised demand levels}
+
+A separate 2025 processing view was used for the demand and
+trip-economics analysis, containing 243,589,684 trip records across
+12 monthly Parquet files (approximately 5.55~GB compressed). This
+stream focuses on a complete calendar year to analyse variation in
+demand across time and location and its relationship with trip
+economics.
+
+Realised demand was defined as the number of completed HVFHV pickups
+within each date-hour. Pickup timestamps were transformed into date
+and hour keys, and the trip records were grouped to produce 8,760
+hourly observations for 2025. The hourly trip-count distribution was
+then divided into approximately equal thirds: Low demand
+($\leq 25{,}205$ trips per hour), Medium demand
+($25{,}206$--$33{,}474$), and High demand
+($>33{,}474$). This produced 2,884 Low-demand hours, 2,982
+Medium-demand hours and 2,894 High-demand hours.
+
+The resulting 8,760-row demand lookup was broadcast and joined back
+to the trip-level data using pickup date and hour. This assigned each
+completed trip a demand level for the subsequent comparison of trip
+characteristics, passenger fares and driver compensation.
+
 \section{MapReduce implementation}
 
 \subsection{Mapping and transformation}
@@ -95,19 +126,36 @@ pickup precedes the request (a telematics clock-drift artefact identified in
 Part~1). All of this is lazy: the physical plan in Appendix~A shows Catalyst
 collapsing six chained projections into two whole-stage code-generated scans.
 
+For the demand and trip-economics stream, the mapping stage
+additionally derived pickup date, hour, trip duration in minutes,
+passenger base fare per mile and driver pay per mile. Economic
+comparisons were restricted to trips with distance of at least
+0.1 miles, positive duration not exceeding six hours, non-negative
+base passenger fare and positive driver pay. These transformations
+were performed in PySpark before aggregation; only the small
+aggregated outputs were converted to Pandas for final visualisation.
+
 \subsection{Shuffle and grouping}
 Aggregation by zone and hour requires rows sharing a key to meet on one
 executor, so Spark repartitions by hash of the grouping key. This is the
 \texttt{Exchange hashpartitioning} node in the physical plan and the only point
 at which data crosses the network. For the main aggregation the exchange moved
-\textbf{\SI{7.2}{\gibi\byte}} --- \SI{6}{\percent} of the \SI{120.5}{\gibi\byte}
+\textbf{\SI{7.2}{\gibi\byte}}; \SI{6}{\percent} of the \SI{120.5}{\gibi\byte}
 read from disk, the reduction coming from column pruning pushed into the Parquet
 reader and from partial aggregation applied before the shuffle.
 
+The demand stream uses the same distributed principle at a
+different grouping level. Trips were first grouped by
+\texttt{(pickup\_date, hour)} to calculate hourly realised demand.
+The physical plan showed an \texttt{Exchange} with hash partitioning
+on these keys across 32 shuffle partitions, ensuring that partial
+counts for the same date-hour were brought together before the final
+aggregation.
+
 \subsection{Reduction and aggregation}
-We implemented the identical computation --- trip count and mean wait by
-$(\text{PU zone},\text{hour})$ --- twice, to make the execution models
-comparable on like terms (Table~\ref{tab:dual}; see also Fig.~A5).
+We implemented the identical computation; trip count and mean wait by
+$(\text{PU zone},\text{hour})$; twice, to make the execution models
+comparable on like terms (Table~\ref{tab:dual}).
 
 \begin{table}[h]\centering\small
 \vspace{-0.3em}
@@ -128,8 +176,8 @@ DataFrame \texttt{groupBy} $\to$ \texttt{agg} & \SI{1.9}{\second} & \SI{1061.4}{
 Both produced \num{6143} identical keys, with zero difference in counts and mean
 waits agreeing to floating-point precision. The RDD path makes the three phases
 explicit: \texttt{map} emits $((\text{zone},\text{hour}),(1,\text{wait}))$,
-\texttt{reduceByKey} combines locally on each partition before shuffling --- the
-exact function of a Hadoop Combiner --- and a final \texttt{map} converts partial
+\texttt{reduceByKey} combines locally on each partition before shuffling, the
+exact function of a Hadoop Combiner and a final \texttt{map} converts partial
 sums to means. The stage metrics quantify that combining: the \texttt{reduceByKey}
 stage read \SI{166.7}{\mebi\byte} and wrote only \SI{558.3}{\kibi\byte} of
 shuffle, a \textbf{306-fold reduction} before any data crossed the network.
@@ -142,6 +190,16 @@ operations are compiled to JVM bytecode by Tungsten and never leave it. This was
 not merely a performance difference: attempting the RDD benchmark over the full
 2025 set caused Python worker handshake timeouts, which is the same cost
 appearing as a failure rather than a delay.
+
+For the demand analysis, partial trip counts were similarly
+combined after the shuffle to produce 8,760 final date-hour
+observations. After the demand categories were broadcast back to the
+trip-level data, a second distributed reduction calculated trip
+counts, mean distance, mean duration, mean base fare and mean driver
+pay measures for each demand level. This reduced hundreds of millions
+of trip-level records to compact analytical summaries while retaining
+the measures required to answer the demand and trip-economics
+question.
 
 \section{Distributed execution evidence}
 
@@ -175,6 +233,16 @@ reports \SI{26.1}{\gibi\byte} on disk and \SI{0}{\byte} in memory against
 \SI{19}{\gibi\byte} of storage memory: it did not fit, and Spark degraded to disk
 rather than failing.
 
+
+The demand and trip-economics pipeline provides a second
+example of this distributed execution pattern. Its formatted Spark
+physical plan shows a partial \texttt{HashAggregate} for local
+date-hour trip counts, followed by an
+\texttt{Exchange hashpartitioning(pickup\_date, hour, 32)} and a
+final \texttt{HashAggregate}. This corresponds directly to local
+mapping and partial aggregation, a shuffle across partitions, and
+final reduction.
+
 \subsection{Spark's DAG versus Hadoop's Map $\to$ Shuffle $\to$ Reduce}
 
 Hadoop MapReduce executes one fixed Map $\to$ Shuffle $\to$ Reduce cycle per
@@ -186,7 +254,7 @@ Four concrete contrasts from this run:
 \begin{itemize}\itemsep1pt \parskip0pt
 \item \textbf{Intermediate I/O.} The \SI{7.2}{\gibi\byte} that crossed our single
 shuffle would, under Hadoop, additionally be written to and re-read from HDFS
-between every stage --- roughly \SI{21.6}{\gibi\byte} of extra write traffic at
+between every stage; roughly \SI{21.6}{\gibi\byte} of extra write traffic at
 default replication, none of which Spark incurs.
 \item \textbf{Automatic combining.} Catalyst placed a partial
 \texttt{HashAggregate} before the exchange and a final one after it. Hadoop
@@ -200,7 +268,7 @@ re-planned partitioning mid-flight. MapReduce is eager and fixed at submission.
 
 \section{Results}
 
-\subsection{Thread A --- Congestion pricing did less than the headline suggests}
+\subsection{Thread A -- Congestion pricing did less than the headline suggests}
 
 A naive year-on-year comparison looks dramatic: CBD-bound trips fell
 \SI{4.39}{\percent} (\num{79897901} to \num{76390002}) while non-CBD trips rose
@@ -213,11 +281,11 @@ month, before any charge existed. There is no discontinuity at the policy date:
 the share in January 2025 was \SI{+0.21}{} pp \emph{above} December 2024, within
 the ordinary month-to-month variation of \num{-0.199} pp observed across 2024.
 Extrapolating the 2024 trend predicts a 2025 mean of \SI{33.60}{\percent} against
-an actual \SI{32.88}{\percent} --- a residual of only \textbf{\num{-0.72} pp},
+an actual \SI{32.88}{\percent}, a residual of only \textbf{\num{-0.72} pp},
 and the 2025 slope (\num{-0.125} pp/month) is only marginally steeper than 2024's.
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.93\linewidth]{../figures/f1_volume.png}
+\begin{figure}[H]\centering
+\includegraphics[width=0.93\linewidth]{Volume_by_Charge.png}
 \vspace{-0.4em}
 \caption{Trip volume by charge status. The divergence in (a) is real, but (b)
 shows most of it predates the 5 January 2025 charge.}
@@ -239,7 +307,7 @@ riders rather than suppressing the trip.
 Conditional on being charged, the flat fee is regressive
 (Fig.~\ref{fig:fee}). Against mean borough fares it represents
 \SI{7.98}{\percent} of a Bronx fare but only \SI{5.17}{\percent} of a Manhattan
-one --- a \num{1.54}$\times$ spread, falling hardest on the lowest-fare riders.
+one, a \num{1.54}$\times$ spread, falling hardest on the lowest-fare riders.
 In aggregate the incidence is reversed: Manhattan pickups generated
 \SI{83.1}{\percent} of the \$\num{117124706} collected in 2025, because
 \SI{76.3}{\percent} of Manhattan trips are charged against \SI{3.7}{\percent} of
@@ -247,8 +315,8 @@ Bronx trips. Both statements are true and they answer different questions:
 Manhattan funds the scheme, but an outer-borough rider who does cross the cordon
 pays half again as much of their fare for the privilege.
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.86\linewidth]{../figures/f3_fee.png}
+\begin{figure}[H]\centering
+\includegraphics[width=0.86\linewidth]{Flat_fee.png}
 \vspace{-0.4em}
 \caption{Flat-fee incidence. Per charged trip the burden is regressive (a);
 in aggregate Manhattan funds the scheme (b).}
@@ -256,11 +324,11 @@ in aggregate Manhattan funds the scheme (b).}
 \vspace{-0.5em}
 \end{figure}
 
-\subsection{Thread B --- Service quality is a function of supply density}
+\subsection{Thread B -- Service quality is a function of supply density}
 
 Across \num{5898} zone--hour cells we computed a \emph{mismatch index}: mean wait
 in a zone-hour divided by the citywide mean wait for that same hour. Normalising
-by hour is essential --- without it the analysis merely rediscovers that 04:00 is
+by hour is essential; without it the analysis merely rediscovers that 04:00 is
 slow everywhere. The index reaches \num{2.35} at its worst, and its 90th
 percentile is \num{1.297}.
 
@@ -272,8 +340,8 @@ directly: the binding constraint is the density of available drivers, not road
 congestion. If congestion dominated, the sign would invert at peak hours, and it
 never does.
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.60\linewidth]{../figures/f4_corr.png}
+\begin{figure}[H]\centering
+\includegraphics[width=0.60\linewidth]{Correlation.png}
 \vspace{-0.4em}
 \caption{Correlation between zone trip density and mean wait, by hour.}
 \label{fig:corr}
@@ -282,21 +350,21 @@ never does.
 
 The same mechanism governs shared-ride matching. The match rate ranges from
 \SI{70.9}{\percent} at 23:00 to \SI{39.4}{\percent} at 11:00 and tracks request
-volume with $r = \num{+0.59}$ (Fig.~A3): thin demand cannot be pooled, so
+volume with $r = \num{+0.59}$: thin demand cannot be pooled, so
 passengers who accept a discounted shared fare at midday ride alone three times
 in five.
 
 Persistence matters more than any single bad hour. Filtering to zone-hours above
 the 90th-percentile mismatch and counting distinct bad hours per zone yields
 \textbf{74 persistent service deserts}, four of which are above threshold in all
-24 hours (Fig.~\ref{fig:des}, Fig.~A4). They are overwhelmingly peripheral ---
-23 in Queens, 18 in Staten Island, 18 in Brooklyn --- and concentrated in the
+24 hours (Fig.~\ref{fig:des}). They are overwhelmingly peripheral;
+23 in Queens, 18 in Staten Island, 18 in Brooklyn, and concentrated in the
 Rockaway peninsula and southern Staten Island. Hammels/Arverne is worst at a mean
 index of \num{1.61}, meaning its riders wait \SI{61}{\percent} longer than the
 citywide norm for the same hour, every hour of the day.
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.66\linewidth]{../figures/f7_deserts.png}
+\begin{figure}[H]\centering
+\includegraphics[width=0.66\linewidth]{Mismatch_Index.png}
 \vspace{-0.4em}
 \caption{Zones above the 90th-percentile mismatch index for the greatest number
 of hours. Colour denotes borough.}
@@ -311,26 +379,91 @@ The threads converge on one number. Between 2024 and 2025 mean wait in the CBD
 ($-\SI{1.0}{\percent}$), while mean wait everywhere else \emph{deteriorated} from
 \SI{281.0}{\second} to \SI{294.1}{\second} ($+\SI{4.7}{\percent}$). Congestion
 pricing did not materially remove trips from the cordon. What it appears to have
-done is redistribute driver supply --- and given that service quality is
+done is redistribute driver supply, and given that service quality is
 determined by supply density at every hour of the day, a marginal gain inside the
 cordon was accompanied by a loss four times larger outside it, borne by the same
 peripheral zones already identified as service deserts.
 
+\subsection{Demand patterns and trip economics}
+
+Realised demand varies substantially across both hour of day
+and day of week. Average hourly trip volume was lowest at approximately
+03:00, with about 9,699 completed trips, before increasing through the
+morning and reaching approximately 39,127 trips at 18:00. The
+weekday-hour profile in Fig.~\ref{fig:demand_heatmap} shows that the pattern is not uniform across the week:
+weekday demand rises during the morning and late afternoon, while
+Friday and Saturday maintain higher demand later into the evening.
+Saturday recorded the highest average daily hourly demand, while
+Monday recorded the lowest.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.66\linewidth]{fig_p2_04_weekday_hour_heatmap.png}
+    \caption{Average realised HVFHV demand by day of week and pickup hour during 2025. Demand is measured as completed pickups within each date-hour.}
+    \label{fig:demand_heatmap}
+\end{figure}
+
+The economic results show a different pattern when total
+trip-level amounts are compared with distance-normalised measures.
+Average passenger base fare remained close to \$27 across the three
+demand levels, while average driver pay remained close to \$21.
+However, passenger fare and driver compensation per mile increased
+consistently with realised demand. Passenger base fare per mile
+increased from \$6.17 during Low demand to \$7.57 during Medium
+demand and \$8.18 during High demand. Driver pay per mile similarly
+increased from \$4.45 to \$5.45 and \$5.94, respectively.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.66\linewidth]{fig_p2_06_economics_by_demand.png}
+    \caption{Passenger base fare per mile and driver pay per mile
+    across Low, Medium and High realised-demand conditions in 2025.}
+    \label{fig:economics_demand}
+\end{figure}
+
+
+The increase in per-mile measures occurs alongside changes in
+trip characteristics. Average trip distance decreases from 6.00 miles
+during Low demand to 5.03 miles during Medium demand and 4.68 miles
+during High demand. In contrast, average trip duration increases from
+17.85 minutes to 20.14 minutes and 20.43 minutes, respectively.
+High-demand periods are therefore associated with shorter-distance but
+slightly longer-duration trips, while total passenger base fares and
+driver pay remain comparatively stable. These results show an
+association between realised demand and trip economics and do not
+establish that higher demand causes the observed changes.
+
+The result was also robust to alternative minimum-distance
+thresholds. Using thresholds of 0, 0.1 and 0.5 miles produced the same
+Low--Medium--High ordering for both passenger fare per mile and driver
+pay per mile. This indicates that the observed pattern is not driven
+only by extremely short trips.
+
+Demand conditions also differ spatially. Manhattan's share of
+completed pickups increases from 34.49\% during Low-demand periods to
+38.11\% during High demand, while Queens decreases from 23.88\% to
+20.48\%. Brooklyn remains comparatively stable across the three demand
+levels. This suggests that higher overall demand is accompanied by a
+change in where completed trips are concentrated, rather than a uniform
+increase in activity across all boroughs.
+
+Together, the temporal, economic and spatial results show that
+realised demand is associated not only with the number of completed
+trips, but also with trip characteristics, per-mile economics and the
+geographic distribution of HVFHV activity.
+
+
 \section{Business and societal interpretation}
 
-\textbf{For the TLC and the MTA}, the headline finding is that the fee raised
-\$\num{117124706} in its first year with no volume reduction distinguishable from
-the pre-existing trend. If the policy objective was revenue, it succeeded; if it
-was modal shift away from for-hire vehicles entering the CBD, the evidence here
-does not support it. The \num{-0.72} pp residual against the 2024 trend is the
-honest upper bound on the volume effect, and even that is not separable from
-other 2025 changes.
+\textbf{For the TLC and the MTA}, the headline finding is that the fee raised \$\num{117124706} in its first year with no volume reduction distinguishable from the pre-existing trend. If the policy objective was revenue, it succeeded; if it
+was modal shift away from for-hire vehicles entering the CBD, the evidence here does not support it. The \num{-0.72} pp residual against the 2024 trend is the
+honest upper bound on the volume effect, and even that is not separable from other 2025 changes.
 
 \textbf{For equity regulators}, the flat structure produces a \num{1.54}$\times$
 spread in proportional burden between the lowest- and highest-fare boroughs. A
 fee scaled to fare, or a rebate for trips originating in the zones identified in
 Fig.~\ref{fig:des}, would raise comparable revenue with materially less
-regressivity --- and the dataset makes the trade-off directly computable.
+regressivity, and the dataset makes the trade-off directly computable.
 
 \textbf{For outer-borough riders}, the service-desert result has a sharper
 implication than slow service. Part~1 showed these are the zones where ridehail
@@ -342,9 +475,23 @@ rider in Midtown.
 
 \textbf{For operators}, the negative density--wait correlation at every hour is a
 positioning signal: the marginal value of an additional driver is highest exactly
-where current density is lowest. The 74 zones in Fig.~A4 are a concrete target
-list, and the midday shared-match collapse to \SI{39.4}{\percent} identifies when
+where current density is lowest. The 74 identified zones are a concrete target list, and the midday shared-match collapse to \SI{39.4}{\percent} identifies when
 pooling incentives fail.
+
+The demand and trip-economics results add a further operational
+perspective. For HVFHV platforms, the strong variation in demand by
+hour and day can support decisions about when and where additional
+driver availability may be most valuable. For drivers, High-demand
+periods are associated with higher compensation per mile, increasing
+from \$4.45 per mile during Low demand to \$5.94 during High demand,
+although this should not be interpreted as profitability because the
+dataset does not contain drivers' operating costs. For passengers,
+the corresponding increase in base fare per mile from \$6.17 to
+\$8.18 shows that similar total fares can represent different value
+per mile under different demand conditions. The spatial results also
+show that demand growth is not distributed uniformly across boroughs,
+which is relevant when considering service allocation outside the
+highest-demand areas.
 
 \textbf{Limitations.} Three bound these conclusions. \emph{First, identification}
 --- 2024 and 2025 differ in many ways besides the fee, and we report association
@@ -356,43 +503,32 @@ requesting are invisible, which means our mismatch index understates the problem
 supply redistribution we infer from wait times cannot be confirmed by observing
 drivers directly.
 
+The demand analysis has an additional measurement limitation:
+``realised demand'' represents completed pickups rather than total
+passenger demand. Cancelled requests, unsuccessful matches and
+passengers who did not complete a booking are not observed, so the
+Low, Medium and High categories describe completed market activity
+rather than all potential ride demand.
+
 \clearpage
 \section*{Appendix}
 
 \begin{figure}[h]\centering
-\includegraphics[width=0.60\linewidth]{../figures/f0_threshold.png}
+\includegraphics[width=0.60\linewidth]{Empirical_charge_rate.png}
 \caption*{\small\textbf{Figure A1.} Empirical charge rate by destination zone,
 2025. The distribution is strongly bimodal --- 178 zones below 0.2 and 38 above
 0.8, with only 29 in between --- so the classification threshold is not delicate.}
 \end{figure}
 
 \begin{figure}[h]\centering
-\includegraphics[width=0.78\linewidth]{../figures/f2_segments.png}
+\includegraphics[width=0.78\linewidth]{Figure_A2.png}
 \caption*{\small\textbf{Figure A2.} Trip volume by zone segment, indexed to each
 segment's 2024 mean. The boundary ring grew \SI{0.79}{\percent} against
 \SI{5.26}{\percent} for outer zones, which is inconsistent with riders stopping
 short of the cordon to avoid the charge.}
 \end{figure}
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.62\linewidth]{../figures/f6_shared.png}
-\caption*{\small\textbf{Figure A3.} Shared-ride match rate against request volume
-by hour. Matching succeeds where demand is thick and collapses at midday.}
-\end{figure}
 
-\begin{figure}[h]\centering
-\includegraphics[width=0.84\linewidth]{../figures/f5_mismatch.png}
-\caption*{\small\textbf{Figure A4.} Mismatch index by zone and hour for the 18
-worst-served zones. Values above 1.0 indicate waits longer than the citywide mean
-for that hour.}
-\end{figure}
-
-\begin{figure}[h]\centering
-\includegraphics[width=0.70\linewidth]{../figures/f8_rdd_df.png}
-\caption*{\small\textbf{Figure A5.} The RDD implementation shuffled less data than
-the DataFrame implementation yet ran \num{6.56}$\times$ slower, isolating the
-JVM-to-Python process boundary as the cost.}
-\end{figure}
 
 \vspace{0.5em}
 \noindent\textbf{Physical plan (abridged).} Catalyst collapsed six chained
