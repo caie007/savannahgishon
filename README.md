@@ -37,11 +37,11 @@ redistributed. `data/raw/` is gitignored; run the download step below.
 
 The HVFHV series is **not schema-stable** and this will break a naive read:
 
-| Period | Notes |
-|---|---|
-| 2019-02 â€“ 2020-12 | Reduced schema: licensee, base, pickup/dropoff time, PU/DO zone, `SR_Flag` only |
-| 2021-01 onward | Adds `request_datetime`, `on_scene_datetime`, `trip_miles`, `trip_time`, itemised fares, `driver_pay`, shared/WAV/Access-A-Ride flags |
-| 2025-01 onward | Adds `cbd_congestion_fee` for NYC congestion pricing |
+| Period             | Notes |
+|--------------------|---|
+| 2019-02 to 2020-12 | Reduced schema: licensee, base, pickup/dropoff time, PU/DO zone, `SR_Flag` only |
+| 2021-01 onward     | Adds `request_datetime`, `on_scene_datetime`, `trip_miles`, `trip_time`, itemised fares, `driver_pay`, shared/WAV/Access-A-Ride flags |
+| 2025-01 onward     | Adds `cbd_congestion_fee` for NYC congestion pricing |
 
 Read with `mergeSchema` enabled, or restrict to a single-schema window.
 
@@ -49,10 +49,10 @@ Read with `mergeSchema` enabled, or restrict to a single-schema window.
 
 Defined in `src/config.py` and measured by `src/sizes.py`:
 
-- **Raw** â€” the full published archive (2019-02 to 2026-05). Measured via HTTP
+- **Raw**  the full published archive (2019-02 to 2026-05). Measured via HTTP
   `HEAD` requests; never downloaded in full.
-- **Working** â€” 2024-01 onward; the modern, schema-consistent window.
-- **Processing** â€” calendar year 2025; the first complete year under NYC
+- **Working**  2024-01 onward; the modern, schema-consistent window.
+- **Processing**  calendar year 2025; the first complete year under NYC
   congestion pricing.
 
 Actual measured sizes are written to `output/dataset_sizes.csv`.
@@ -90,16 +90,16 @@ is safe to re-run after an interrupted download.
 
 ```
 .
-â”œâ”€â”€ README.md
-â”œâ”€â”€ requirements.txt
-â”œâ”€â”€ data/
-â”‚   â”œâ”€â”€ README.md          how to obtain the data; raw files are not committed
-â”‚   â””â”€â”€ raw/               (gitignored)
-â”œâ”€â”€ notebooks/             analysis notebooks
-â”œâ”€â”€ src/                   config, size audit, download helpers
-â”œâ”€â”€ output/                computed aggregates (CSV/JSON), committed
-â”œâ”€â”€ figures/               generated plots, committed
-â””â”€â”€ report/                LaTeX source and compiled PDFs
+README.md
+requirements.txt
+data/
+ README.md          how to obtain the data; raw files are not committed
+ raw/               (gitignored)
+ notebooks/             analysis notebooks
+ src/                   config, size audit, download helpers
+ output/                computed aggregates (CSV/JSON), committed
+ figures/               generated plots, committed
+ report/                LaTeX source and compiled PDFs
 ```
 
 ## Outputs
