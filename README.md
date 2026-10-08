@@ -122,7 +122,7 @@ data/
 
 ## Attribution
 
-Trip data Â© City of New York, published by the NYC Taxi and Limousine
+Trip data © City of New York, published by the NYC Taxi and Limousine
 Commission under the NYC.gov Terms of Use. The TLC states that the trip data was
 not created by the TLC and it makes no representations as to its accuracy.
 
