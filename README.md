@@ -137,4 +137,7 @@ in a single distributed pass. **This file is not committed** — regenerate it b
 running that section, which takes 20–40 minutes. Everything in `output/p2/`
 derives from it.
 
-Report: `report/MIT805_Part2_HVFHV_report.pdf`
+Report: `MIT805_Part2_HVFHV_Report_PySpark.pdf`
+
+## 10 Minute Presentation
+`https://drive.google.com/file/d/1eilg9h0ehZp1u6jBd39YS7WGgjUqYVF7/view?usp=drive_link`
