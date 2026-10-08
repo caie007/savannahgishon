@@ -1,4 +1,4 @@
-# MIT 805 Big Data â€” NYC High Volume For-Hire Vehicle (HVFHV) Analysis
+# MIT 805 Big Data  NYC High Volume For-Hire Vehicle (HVFHV) Analysis
 
 University of Pretoria, MIT 805 semester project (2026).
 **Group members:** Gishon K Gwenzi (21731056), Letsoba Savannah Mabe (20582995)
